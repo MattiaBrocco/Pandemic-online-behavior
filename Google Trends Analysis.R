@@ -30,8 +30,20 @@ ggseasonplot(seas_amz, polar=TRUE) +
 
 #Per maggiore interpretqbilità, potebbe essere un'idea fare questi plot su base mensile
 
+###BM###
+amzn = Google_Trends$Amazon
+amzn_bm<-BM(amzn,display = T)
+summary(amzn_bm)
 
-#Now we know our data as seasonal. So I need to differencing.
+pred_bmamzn<- predict(amzn_bm, newx=c(1:260))
+pred.bminstamzn<- make.instantaneous(pred_bmamzn)
+
+plot(amzn, type= "l", xlim=c(1,260))
+lines(pred.bminstamzn, lwd=2, col=2)
+
+
+###ARIMA model
+#We know our data as seasonal. So I need to differencing.
 
 amazon %>% diff(lag=52) %>% ggtsdisplay() #dati ancora stagionali, bisogna differenziare ancora
 amazon %>% diff(lag=52) %>% diff() %>% ggtsdisplay()#Now the ts is without seasonality.
