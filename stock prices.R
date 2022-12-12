@@ -1,17 +1,19 @@
-library(ggplot2)
-library(lubridate)
-library(fpp2)
-library(forecast)
-library(lmtest) 
-library(DIMORA)
+library(sm)
 library(gam)
+library(fpp2)
+library(lmtest)
+library(DIMORA)
+library(splines)
+library(ggplot2)
+library(forecast)
+library(lubridate)
 
 # Import Data and Preprocessing--------------------------------------------------------------------
 #AMAZON
-AMZN_weekly = read.csv("AMZN_weekly.csv", sep=";")
+AMZN_weekly = read.csv("./yahoo_data/AMZN_weekly.csv", sep=",")
 AMZN_weekly = AMZN_weekly[, c(1, 6)]
 colnames(AMZN_weekly) = c('Time', 'Close')
-AMZN_weekly$Time = as.Date(AMZN_weekly$Time, format = "%d/%m/%Y")
+AMZN_weekly$Time = as.Date(AMZN_weekly$Time)
 str(AMZN_weekly)
 AMZN = ts(AMZN_weekly$Close, freq=52, start=decimal_date(ymd("2017-12-04")))
 str(AMZN)
@@ -21,19 +23,19 @@ AMZN_2 = ts(AMZN_weekly_2$Close, freq=52, start=decimal_date(ymd("2017-12-11")))
 
 
 #NETFLIX
-NFLX_weekly = read.csv("NFLX_weekly.csv", sep=";")
+NFLX_weekly = read.csv("./yahoo_data/NFLX_weekly.csv", sep=",")
 NFLX_weekly = NFLX_weekly[, c(1, 6)]
 colnames(NFLX_weekly) = c('Time', 'Close')
-NFLX_weekly$Time = as.Date(NFLX_weekly$Time, format = "%d/%m/%Y")
+NFLX_weekly$Time = as.Date(NFLX_weekly$Time)
 str(NFLX_weekly)
 NFLX = ts(NFLX_weekly$Close, freq=52, start=decimal_date(ymd("2017-12-04")))
 boxplot(NFLX, col="dark red")
 
 #ZOOM
-ZM_weekly = read.csv("ZM_weekly.csv", sep=";")
+ZM_weekly = read.csv("./yahoo_data/ZM_weekly.csv", sep=",")
 ZM_weekly = ZM_weekly[, c(1, 6)]
 colnames(ZM_weekly) = c('Time', 'Close')
-ZM_weekly$Time = as.Date(ZM_weekly$Time, format = "%d/%m/%Y")
+ZM_weekly$Time = as.Date(ZM_weekly$Time)
 str(ZM_weekly)
 empty_data = data.frame(AMZN_weekly[1:71,1], rep(0, 71)) 
 colnames(empty_data) = c('Time', 'Close')
@@ -42,7 +44,7 @@ ZM = ts(ZM_weekly$Close, freq=52, start=decimal_date(ymd("2017-12-04")))
 boxplot(ZM_weekly$Close, col="light blue")
 
 #GoogleTrends Data
-Google_Trends <- read.csv("Google Trends Data.csv", na = "0", skip = 1)
+Google_Trends <- read.csv("./gtrend_data/Google Trends Data.csv", na = "0", skip = 1)
 colnames(Google_Trends) <- c('Time','Amazon','Netflix', 'Zoom')
 plot(ts(Google_Trends[2:4], freq=365.25/7, start=decimal_date(ymd("2017-12-10"))), main = "Google Trends")
 amazon = ts(Google_Trends$Amazon, freq=52, start=decimal_date(ymd("2017-12-10")))
@@ -53,7 +55,8 @@ z[is.na(z)] <- 0
 zoom = ts(z, freq=52, start=decimal_date(ymd("2017-12-10")))
 
 #Plot all stock dataset
-Close_Data = data.frame(NFLX_weekly$Time, AMZN_weekly$Close, NFLX_weekly$Close, ZM_weekly$Close)
+Close_Data = data.frame(NFLX_weekly$Time, AMZN_weekly$Close,
+                        NFLX_weekly$Close, ZM_weekly$Close)
 Close_Data_ts = data.frame(AMZN, NFLX, ZM)
 colnames(Close_Data) = c('Time', 'Amazon', 'Netflix', 'Zoom')
 
@@ -67,7 +70,9 @@ ggplot() +
                       breaks = c("Amazon", "Netflix", "Zoom"),
                       values = c("dark blue", "dark red", "light blue"))
 
-plot(ts(Close_Data[c(2,3,4)], freq=365.25/7, start = decimal_date(as.Date("2017-12-04"))), main = "Close values")
+plot(ts(Close_Data[c(2,3,4)], freq=365.25/7,
+        start = decimal_date(as.Date("2017-12-04"))),
+     main = "Close values")
 
 # Amazon - Autocorrelation and TSLM------------------------------------------------------------------------------
 
@@ -126,11 +131,13 @@ summary(amzn_bm)
 pred_bmamzn<- predict(amzn_bm, newx=c(1:270))
 pred.bminstamzn<- make.instantaneous(pred_bmamzn)
 
-plot(AMZN_weekly$Close, type= "b",  pch=16, lty=3, cex=0.6, xlim=c(1,270), ylab="AMZN_Close")
+plot(AMZN_weekly$Close, type= "b",  pch=16, lty=3, cex=0.6,
+     xlim=c(1,270), ylab="AMZN_Close")
 lines(pred.bminstamzn, lwd=2, col=2)
 
 ####GGM RECTANGULAR----
-GGM_amzn<- GGM(AMZN, prelimestimates=c(5.588426e+04, 0.001, 0.01, 1.022318e-03, 9.127817e-03))
+GGM_amzn<- GGM(AMZN, prelimestimates=c(5.588426e+04, 0.001, 0.01,
+                                       1.022318e-03, 9.127817e-03))
 summary(GGM_amzn)
 
 pred_GGM_amzn<- predict(GGM_amzn, newx=c(1:270))
@@ -170,19 +177,21 @@ lines(fitted(auto_arima_amzn), col=2)
 ####NON PARAMETRIC MODELS----
 
 #####Local Regression----
-library(sm)
-plot(AMZN_weekly$Time, AMZN_weekly$Close, type="l", xlab="Time", ylab="Amazon close", lwd=2)
-sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = 10, add = T, col=2,  display="se", lwd=2, ngrid=200)
+plot(AMZN_weekly$Time, AMZN_weekly$Close, type="l", xlab="Time",
+     ylab="Amazon close", lwd=2)
+sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = 10,
+              add = T, col=2,  display="se", lwd=2, ngrid=200)
 
 #####Loess----
-plot(AMZN_weekly$Time, AMZN_weekly$Close, xlab="Time", ylab="Amazon close", type="l", lwd = 2)
+plot(AMZN_weekly$Time, AMZN_weekly$Close, xlab="Time",
+     ylab="Amazon close", type="l", lwd = 2)
 lo1 <- loess.smooth(AMZN_weekly$Time, AMZN_weekly$Close, span=0.2)
 lines(lo1, col=2, lwd = 2)
 #vedi meglio
 
 #####Regression splines----
-library(splines)
-plot(AMZN_weekly$Time, AMZN_weekly$Close, xlab="Time", ylab="Amazon close", type="l", lwd = 2)
+plot(AMZN_weekly$Time, AMZN_weekly$Close, xlab="Time",
+     ylab="Amazon close", type="l", lwd = 2)
 m1<-lm(AMZN_weekly$Close~bs(AMZN_weekly$Time, df=15, degree=3)) 
 xxx<-seq(min(AMZN_weekly$Time),max(AMZN_weekly$Time),length=262)
 fit1<-predict(m1, data.frame(x=xxx))
@@ -190,6 +199,67 @@ lines(xxx,fit1,col=2, lwd = 2)
 
 #####Smoothing splines----
 #0.0001 o 0.00001?
-plot(AMZN_weekly$Time, AMZN_weekly$Close, xlab="Time", ylab="Amazon close", type="l", lwd = 2)
+plot(AMZN_weekly$Time, AMZN_weekly$Close,
+     xlab="Time", ylab="Amazon close", type="l", lwd = 2)
 s <- smooth.spline(AMZN_weekly$Time, AMZN_weekly$Close, lambda=0.0001)
 lines(s, col=2, lwd=2)
+
+
+# NETFLIX - Models --------------------------------------------------------------------------------------------
+
+nflx_bm<-BM(NFLX, prelimestimates = c(1000, 0.001, 0.1),
+            display = T)
+# Exponential shocks make the fit worse. Any combination of
+# parameter sign for rectangular shock (and thus also GGM) gives
+# error related to the Cholesky decomposition of the hessian (CHECK !)
+summary(nflx_bm)
+
+####ARIMA MODELS----
+Acf(NFLX)
+Pacf(NFLX)
+# there is an exponential decline in Acf and there is
+# a significant spike at lag 1 in PACF and nothing else
+# so we would opt for an Arima(p,d,0) - same as AMZN
+auto_arima_nflx<- auto.arima(NFLX)
+summary(auto_arima_nflx)
+res_nflx_aa = residuals(auto_arima_nflx)
+Acf(res_nflx_aa)
+AIC(auto_arima_nflx)
+
+plot(NFLX, ylab="NFLX_Close", type="l") # almost perfect fit !
+lines(fitted(auto_arima_nflx), col=2)
+
+####NON PARAMETRIC MODELS----
+
+#####Local Regression----
+plot(NFLX_weekly$Time, NFLX_weekly$Close, type="l", xlab="Time",
+     ylab="Netflix close", lwd=2)
+locreg_nflx <- sm.regression(NFLX_weekly$Time, NFLX_weekly$Close,
+                             h = 10, add = T, col=2,  display="se",
+                             lwd = 2, ngrid = 262)
+# MSE:
+sum((NFLX_weekly$Close - locreg_nflx$estimate)^2)/length(NFLX_weekly$Time)
+
+#####Regression splines----
+plot(NFLX_weekly$Time, NFLX_weekly$Close, xlab="Time",
+     ylab="Amazon close", type="l", lwd = 2)
+reg_spline_nflx <- lm(NFLX_weekly$Close~bs(NFLX_weekly$Time,
+                                           df = 30, degree = 3)) 
+seq_nflx <-seq(min(NFLX_weekly$Time),
+               max(NFLX_weekly$Time), length = 262)
+
+fit_regsp_nflx <- predict(reg_spline_nflx,
+                          data.frame(x = seq_nflx))
+lines(seq_nflx, fit_regsp_nflx, col = 2, lwd = 2)
+
+AIC(reg_spline_nflx)
+
+#####Smoothing splines----
+#0.0001 o 0.00001?
+plot(NFLX_weekly$Time, NFLX_weekly$Close,
+     xlab="Time", ylab="Netflix close", type="l", lwd = 2)
+nflx_ss <- smooth.spline(NFLX_weekly$Time, NFLX_weekly$Close,
+                         lambda=0.00005)
+lines(nflx_ss, col=2, lwd=2)
+# MSE:
+sum((NFLX_weekly$Close - nflx_ss$y)^2)/length(NFLX_weekly$Time)
