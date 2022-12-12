@@ -206,6 +206,25 @@ lines(s, col=2, lwd=2)
 
 
 # NETFLIX - Models --------------------------------------------------------------------------------------------
+#TSLM
+fit1_nflx <- tslm(NFLX~trend) 
+summary(fit1_nflx)
+
+#TSLM with Amazon
+# - Adding season produces more seasonal residuals
+#   residuals with season are modeled with SARIMA(1,0,0)(0,0,1)[52]
+# - Using ZOOM instead, worsens the fit.
+fit2_nflx <- tslm(NFLX~ trend+AMZN)
+summary(fit2_nflx)
+plot(NFLX)
+lines(fitted(fit2_nflx), col=2)
+
+fit2_res_autoarima <- auto.arima(residuals(fit2_nflx)) # -> ARIMA(1,0,1) w/ zero mean
+summary(fit2_res_autoarima) 
+plot(residuals(fit2_nflx),
+     ylab="Residual fit2", type = "l")
+lines(fitted(fit2_res_autoarima), col = 2)
+
 
 nflx_bm<-BM(NFLX, prelimestimates = c(1000, 0.001, 0.1),
             display = T)
