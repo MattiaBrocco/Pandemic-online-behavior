@@ -1,19 +1,20 @@
+library(readr)
+library(DIMORA)
+library(lmtest)
+library(Metrics)
 library(forecast)
 library(lubridate)
-library(lmtest) 
-library(DIMORA)
-library(readr)
 
-Google_Trends <- read_csv("Desktop/Business Data/Google Trends Data.csv", na = "0", skip = 1)
-colnames(Google_Trends) <- c('Time','Amazon','Netflix', 'Zoom')
+source("support.R")
 
-plot(ts(Google_Trends[2:4], freq=365.25/7, start=decimal_date(ymd("2017-12-10"))), main = "Google Trends")
+Google_Trends <- read.timeseries.google("./gtrend_data/Google Trends Data.csv")
 
-amazon = ts(Google_Trends$Amazon, freq=52, start=decimal_date(ymd("2017-12-10")))
-netflix = ts(Google_Trends$Netflix, freq=52, start=decimal_date(ymd("2017-12-10")))
-z = as.numeric(Google_Trends$Zoom)
-z[is.na(z)] <- 0
-zoom = ts(z, freq=52, start=decimal_date(ymd("2017-12-10")))
+plot(ts(Google_Trends[2:4], freq=365.25/7,
+        start=decimal_date(ymd("2017-12-10"))), main = "Google Trends")
+
+amazon = get.ts.google(Google_Trends$Amazon, "2017-12-10")
+netflix = get.ts.google(Google_Trends$Netflix, "2017-12-10")
+zoom = get.ts.google(Google_Trends$Netflix, "2017-12-10")
 
 ###AMAZON
 
@@ -21,8 +22,9 @@ autoplot(amazon)
 acf(amazon, lag.max = 260) #There is seasonality
 pacf(amazon, lag.max = 104)
 
-#Qui ho tolto il 2017 perchÃ¨ avendo solo 4 osservazioni dava prroblemi di intepretabilitÃ  nel plot
-seas_amz= ts(Google_Trends$Amazon[4:260], freq=52, start=decimal_date(ymd("2018-1-6")))
+#Qui ho tolto il 2017 perchè avendo solo 4 osservazioni dava prroblemi di intepretabilità nel plot
+seas_amz= ts(Google_Trends$Amazon[4:260], freq=52,
+             start=decimal_date(ymd("2018-1-6")))
 ggseasonplot(seas_amz, main = "Seasonal Plot: Amazon")
 ggseasonplot(seas_amz, polar=TRUE) +
   ylab("Amazon Trends") +
