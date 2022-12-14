@@ -1,12 +1,13 @@
-library(sm)
-library(gam)
-library(fpp2)
-library(lmtest)
-library(DIMORA)
-library(splines)
-library(ggplot2)
-library(forecast)
-library(lubridate)
+require(sm)
+require(gam)
+require(fpp2)
+require(dplyr)
+require(lmtest)
+require(DIMORA)
+require(splines)
+require(ggplot2)
+require(forecast)
+require(lubridate)
 
 #####1: Clean stocks------
 read.timeseries.stocks <- function(path){
@@ -19,10 +20,16 @@ read.timeseries.stocks <- function(path){
   colnames(data) = c("Time", "Close")
   # date format
   data$Time <- as.Date(data$Time)
-  if (typeof(data$Time) == "character"){
+  if (typeof(data$Time[1]) == "character"){
+    data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
+  }
+  else if (typeof(data$Time[1]) != "double"){
     data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
   }
   else {data <- data}
+  
+  # remove first and last observations
+  data <- slice(data, 2:(n() - 1))
   
   return(data)
 }
@@ -57,7 +64,6 @@ get.ts.google <- function(inp, start.date){
 
 #####4: First GGPLOT------
 gg.comparison1 <- function(){
-  require("ggplot2")
   Close_Data = data.frame(NFLX_weekly$Time, AMZN_weekly$Close,
                           NFLX_weekly$Close, ZM_weekly$Close)
   Close_Data_ts = data.frame(AMZN, NFLX, ZM)
