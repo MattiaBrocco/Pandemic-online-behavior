@@ -120,7 +120,8 @@ summary(GGM_amzn)
 pred_GGM_amzn<- predict(GGM_amzn, newx=c(1:270))
 pred_GGM_amzn.inst<- make.instantaneous(pred_GGM_amzn)
 
-plot(AMZN_weekly$Close, type= "b",  pch=16, lty=3, cex=0.6, xlim=c(1,270), ylab="AMZN_Close")
+plot(AMZN_weekly$Close, type= "b",  pch=16, lty=3, cex=0.6, xlim=c(1,270),
+     ylab="AMZN_Close")
 lines(pred_GGM_amzn.inst, lwd=2, col=2)
 
 ####ARIMA MODELS----
