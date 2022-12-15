@@ -10,7 +10,7 @@ require(forecast)
 require(lubridate)
 
 #####1: Clean stocks------
-read.timeseries.stocks <- function(path){
+read.timeseries.stocks <- function(path, get190 = FALSE){
   data <- read.csv(path, sep=",")
   # separator
   if (dim(data)[2] == 1){
@@ -24,18 +24,16 @@ read.timeseries.stocks <- function(path){
   if (startsWith(as.character(as.Date(data$Time)[1][1]), "0")){
     data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
   }
-  else if (typeof(data$Time[1]) != "double"){
-    data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
-  }
-  else if (typeof(data$Time[1]) == "character"){
-    data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
-  }
-  else {
-    print("eeeee")
-    data$Time <- as.Date(data$Time)}
+  else {data$Time <- as.Date(data$Time)}
   
   # remove first and last observations
   data <- slice(data, 2:(n() - 1))
+  
+  # AD-HOC SLICING FOR ZOOM
+  if (get190 == TRUE){
+    data <- data[data$Time >= "2019-04-15",]
+    data <- data[data$Time <= "2022-11-28",]
+  }
   
   return(data)
 }

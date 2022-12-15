@@ -243,7 +243,7 @@ plot(NFLX_weekly$Time, NFLX_weekly$Close, xlab="Time",
 reg_spline_nflx <- lm(NFLX_weekly$Close~bs(NFLX_weekly$Time,
                                            df = 30, degree = 3)) 
 seq_nflx <-seq(min(NFLX_weekly$Time),
-               max(NFLX_weekly$Time), length = 262)
+               max(NFLX_weekly$Time), length = 260)
 
 fit_regsp_nflx <- predict(reg_spline_nflx,
                           data.frame(x = seq_nflx))

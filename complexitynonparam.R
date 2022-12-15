@@ -8,6 +8,9 @@ require(ggplot2)
 require(forecast)
 require(lubridate)
 
+# SOURCE FOR BIAS FORMULA
+# http://rafalab.dfci.harvard.edu/pages/754/section-05.pdf
+
 ##LOESS-------
 loess.bias.var <- function(dX){
   bias.v <- c()
@@ -21,12 +24,13 @@ loess.bias.var <- function(dX){
     loessMod <- loess(dX~seq(1, length(dX)), span = i, degree = 2)
     
     res <- resid(loessMod)
-    bias2 <- sum((mean(loessMod$fitted)-dX)^2)/length(dX)
-    var <- sum((mean(loessMod$fitted)-loessMod$fitted)^2)/length(dX)
+    bias2 <- sum((dX-mean(loessMod$fitted))^2)/length(dX)
+    var <- mean((loessMod$fitted-mean(loessMod$fitted))^2)#/length(dX)
+    mse <- sum((loessMod$fitted-dX)^2)/length(dX)
     
     bias.v <- append(bias.v, bias2)
     var.v <- append(var.v, var)
-    error.v <- append(error.v, bias2+var)
+    error.v <- append(error.v, mse)
     res.v <- append(res.v, sum(res))
     
     span.i <- append(span.i, i)
@@ -35,9 +39,9 @@ loess.bias.var <- function(dX){
   out <- cbind(span.i, bias.v, var.v, error.v, res.v)
   out <- data.frame(out)
   names(out) <- c("Span", "Bias",
-                  "Variance", "Total.Error", "SSR")
+                  "Variance", "MSE", "SSR")
   
-  best.values <- which(out$Total.Error == min(out$Total.Error))
+  best.values <- which(out$MSE == min(out$MSE))
   
   y.lim.1 <- min(out[,-c(1, 4, 5)])*0.95
   y.lim.2 <- 1.05*max(out[,-c(1, 4, 5)])
@@ -45,6 +49,93 @@ loess.bias.var <- function(dX){
   plot(seq(1, dim(out)[1]), out$Variance,
        type = "l", ylim = c(y.lim.1, y.lim.2))
   lines(seq(1, dim(out)[1]), out$Bias, col = 2)
+  legend(dim(out)[1]*0.7, y.lim.2*0.25, legend=c("Variance", "Bias"),
+         col = c("black", "red"), lty=1:1, cex=0.6)
+  abline(v = best.values, lty = 2)
+  
+  return(out)
+}
+
+
+##LOCAL REGRESSION----
+locreg.bias.var <- function(data){
+  bias.v <- c()
+  var.v <- c()
+  error.v <- c()
+  h.i <- c()
+  iter.array <- seq.int(1, 1000, 3)
+  for (i in iter.array)
+    {
+    locreg <- sm.regression(data$Time, data$Close,
+                            h = i, display = F)
+    
+    bias2 <- sum((data$Close-mean(locreg$model.y))^2)/length(data$Time)
+    var <- mean((locreg$model.y-mean(locreg$model.y))^2)#/length(data$Time)
+    
+    interp <- approx(locreg$model.y, method = "linear",
+                     rule = 2, n = length(data$Close))
+    mse <- sum((interp$y-data$Close)^2)/length(data$Close)
+    
+    bias.v <- append(bias.v, bias2)
+    var.v <- append(var.v, var)
+    error.v <- append(error.v, mse)
+    
+    h.i <- append(h.i, i)
+  }
+  out <- cbind(h.i, bias.v, var.v, error.v)
+  out <- data.frame(out)
+  names(out) <- c("h.param", "Bias", "Variance", "MSE")
+  
+  best.values <- which(out$MSE == min(out$MSE))
+  
+  y.lim.1 <- min(out[,-c(1, 4)])*0.95
+  y.lim.2 <- 1.05*max(out[,-c(1, 4)])
+  
+  plot(iter.array, out$Variance,
+       type = "l", ylim = c(y.lim.1, y.lim.2))
+  lines(iter.array, out$Bias, col = 2)
+  legend(dim(out)[1]*0.7, y.lim.2*0.25, legend=c("Variance", "Bias"),
+         col = c("black", "red"), lty=1:1, cex=0.6)
+  abline(v = best.values, lty = 2)
+  
+  return(out)
+}
+
+
+##SMOOTHING SPLINE----
+sspline.bias.var <- function(data){
+  bias.v <- c()
+  var.v <- c()
+  error.v <- c()
+  lambda.i <- c()
+  iter.array <- seq(1e-5, 10, length.out = 300)
+  for (i in iter.array)
+  {
+    ss <- smooth.spline(data$Time, data$Close, lambda = i, cv = 10)
+    
+    bias2 <- sum((data$Close-mean(ss$y))^2)/length(data$Time)
+    var <- mean((ss$y-mean(ss$y))^2)#/length(data$Time)
+    
+    mse <- sum((ss$y-data$Close)^2)/length(data$Close)
+    
+    bias.v <- append(bias.v, bias2)
+    var.v <- append(var.v, var)
+    error.v <- append(error.v, mse)
+    
+    lambda.i <- append(lambda.i, i)
+  }
+  out <- cbind(lambda.i, bias.v, var.v, error.v)
+  out <- data.frame(out)
+  names(out) <- c("lambda", "Bias", "Variance", "MSE")
+  
+  best.values <- which(out$MSE == min(out$MSE))
+  
+  y.lim.1 <- min(out[,-c(1, 4)])*0.95
+  y.lim.2 <- 1.05*max(out[,-c(1, 4)])
+  
+  plot(iter.array, out$Variance,
+       type = "l", ylim = c(y.lim.1, y.lim.2))
+  lines(iter.array, out$Bias, col = 2)
   legend(dim(out)[1]*0.7, y.lim.2*0.25, legend=c("Variance", "Bias"),
          col = c("black", "red"), lty=1:1, cex=0.6)
   abline(v = best.values, lty = 2)
