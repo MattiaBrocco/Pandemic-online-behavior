@@ -13,20 +13,26 @@ require(lubridate)
 read.timeseries.stocks <- function(path){
   data <- read.csv(path, sep=",")
   # separator
-  if (dim(data)[2] == 1){data <- read.csv(path, sep=";")}
+  if (dim(data)[2] == 1){
+    data <- read.csv(path, sep=";")}
   else {data <- data}
   # columns selection
   data <- data[, c(1, 6)]
   colnames(data) = c("Time", "Close")
   # date format
-  data$Time <- as.Date(data$Time)
-  if (typeof(data$Time[1]) == "character"){
+  
+  if (startsWith(as.character(as.Date(data$Time)[1][1]), "0")){
     data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
   }
   else if (typeof(data$Time[1]) != "double"){
     data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
   }
-  else {data <- data}
+  else if (typeof(data$Time[1]) == "character"){
+    data$Time <- as.Date(data$Time, format = "%d/%m/%Y")
+  }
+  else {
+    print("eeeee")
+    data$Time <- as.Date(data$Time)}
   
   # remove first and last observations
   data <- slice(data, 2:(n() - 1))
