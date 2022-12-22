@@ -275,52 +275,52 @@ rmse_amzn_smospl
 ####GAM----
 tt<- (1:length(AMZN))
 
-g0 <- gam(AMZN~(tt)+(NFLX)+(ZM)+(amazon))
-summary(g0)
-plot(g0, se=T)
-aic_amzn_gam = AIC(g0)
+g0_a <- gam(AMZN~(tt)+(NFLX)+(ZM)+(amazon))
+summary(g0_a)
+plot(g0_a, se=T)
+aic_amzn_gam = AIC(g0_a)
 aic_amzn_gam
-rmse_amzn_gam = rmse(AMZN, g0$fitted.values)
+rmse_amzn_gam = rmse(AMZN, g0_a$fitted.values)
 rmse_amzn_gam
 
-g1 <- gam(AMZN~s(tt)+s(NFLX))
-summary(g1)
-plot(g1, se=T)
-aic_amzn_gam_n = AIC(g1)
+g1_a <- gam(AMZN~s(tt)+s(NFLX))
+summary(g1_a)
+plot(g1_a, se=T)
+aic_amzn_gam_n = AIC(g1_a)
 aic_amzn_gam_n
-rmse_amzn_gam_n = rmse(AMZN, g1$fitted.values)
+rmse_amzn_gam_n = rmse(AMZN, g1_a$fitted.values)
 rmse_amzn_gam_n
 
-g2 <- gam(AMZN~s(tt)+s(NFLX)+s(ZM))
-summary(g2)
-plot(g2, se=T)
-aic_amzn_gam_nz = AIC(g2)
+g2_a <- gam(AMZN~s(tt)+s(NFLX)+s(ZM))
+summary(g2_a)
+plot(g2_a, se=T)
+aic_amzn_gam_nz = AIC(g2_a)
 aic_amzn_gam_nz
-rmse_amzn_gam_nz = rmse(AMZN, g2$fitted.values)
+rmse_amzn_gam_nz = rmse(AMZN, g2_a$fitted.values)
 rmse_amzn_gam_nz
 
-g3 <- gam(AMZN~s(tt)+s(NFLX)+s(ZM)+s(amazon))
-summary(g3)
-plot(g3, se=T)
-aic_amzn_gam_nza = AIC(g3)
+g3_n <- gam(AMZN~s(tt)+s(NFLX)+s(ZM)+s(amazon))
+summary(g3_n)
+plot(g3_n, se=T)
+aic_amzn_gam_nza = AIC(g3_n)
 aic_amzn_gam_nza
-rmse_amzn_gam_nza = rmse(AMZN, g3$fitted.values)
+rmse_amzn_gam_nza = rmse(AMZN, g3_n$fitted.values)
 rmse_amzn_gam_nza
 
-g4 <- gam(AMZN~lo(tt)+lo(NFLX))
-summary(g4)
-plot(g4, se=T)
-aic_amzn_gam_lo_n = AIC(g4)
+g4_a <- gam(AMZN~lo(tt)+lo(NFLX))
+summary(g4_a)
+plot(g4_a, se=T)
+aic_amzn_gam_lo_n = AIC(g4_a)
 aic_amzn_gam_lo_n
-rmse_amzn_gam_lo_n = rmse(AMZN, g4$fitted.values)
+rmse_amzn_gam_lo_n = rmse(AMZN, g4_a$fitted.values)
 rmse_amzn_gam_lo_n
 
-g5 <- gam(AMZN~lo(tt)+lo(NFLX)+lo(ZM))
-summary(g5)
-plot(g5, se=T)
-aic_amzn_gam_lo_n_z = AIC(g5)
+g5_a <- gam(AMZN~lo(tt)+lo(NFLX)+lo(ZM))
+summary(g5_a)
+plot(g5_a, se=T)
+aic_amzn_gam_lo_n_z = AIC(g5_a)
 aic_amzn_gam_lo_n_z
-rmse_amzn_gam_lo_n_z = rmse(AMZN, g5$fitted.values)
+rmse_amzn_gam_lo_n_z = rmse(AMZN, g5_a$fitted.values)
 rmse_amzn_gam_lo_n_z
 
 
