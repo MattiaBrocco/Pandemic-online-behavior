@@ -23,9 +23,9 @@ source("complexitynonparam.R")
 
 
 # Import data----
-AMZN_weekly <- read.timeseries.stocks("./yahoo_data/AMZN_weekly.csv")
-NFLX_weekly <- read.timeseries.stocks("./yahoo_data/NFLX_weekly.csv")
-ZOOM_weekly <- read.timeseries.stocks("./yahoo_data/ZM_weekly.csv")
+AMZN_weekly <- read.timeseries.stocks("./data/AMZN_weekly.csv")
+NFLX_weekly <- read.timeseries.stocks("./data/NFLX_weekly.csv")
+ZOOM_weekly <- read.timeseries.stocks("./data/ZM_weekly.csv")
 ```
 
 ## Loess
