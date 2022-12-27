@@ -39,7 +39,7 @@ loess.AMZN.best <- loess(AMZN_weekly$Close~seq(1, length(AMZN_weekly$Close)),
 
 plot(AMZN_weekly$Time, AMZN_weekly$Close,
      type = "l", lwd = 2, xlab = "Time", ylab = "",
-     main = "Amazon close price (loess)")
+     main = "Amazon trend (loess)")
 j.AMZN <- order(AMZN_weekly$Time)
 lines(AMZN_weekly$Time[j.AMZN],loess.AMZN.best$fitted[j.AMZN],
       col = 2, lwd = 2)
@@ -53,7 +53,7 @@ loess.NFLX.best <- loess(NFLX_weekly$Close~seq(1, length(NFLX_weekly$Close)),
 
 plot(NFLX_weekly$Time, NFLX_weekly$Close,
      type = "l", lwd = 2, xlab = "Time", ylab = "",
-     main = "Netflix close price (loess)")
+     main = "Netflix trend (loess)")
 j.NFLX <- order(NFLX_weekly$Time)
 lines(NFLX_weekly$Time[j.NFLX],
       loess.NFLX.best$fitted[j.NFLX], col = 2, lwd = 2)
@@ -69,7 +69,7 @@ loess.ZOOM.best <- loess(ZOOM_weekly$Close~seq(1, length(ZOOM_weekly$Close)),
 
 plot(ZOOM_weekly$Time, ZOOM_weekly$Close, type = "l",
      lwd = 2, xlab = "Time", ylab = "",
-     main = "ZOOM close price (loess)")
+     main = "ZOOM trend (loess)")
 j.ZOOM <- order(ZOOM_weekly$Time)
 lines(ZOOM_weekly$Time[j.ZOOM],
       loess.ZOOM.best$fitted[j.ZOOM], col = 2, lwd = 2)
@@ -88,21 +88,21 @@ best.h.ZOOM <- locreg.ZOOM$h.param[which(locreg.ZOOM$MSE
 
 ### AMZN----
 plot(AMZN_weekly$Time, AMZN_weekly$Close,
-     xlab = "Time", main = "Amazon close (local regr.)",
+     xlab = "Time", main = "Amazon trend (local regr.)",
      ylab = "", lwd = 2, type = "l")
 sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = best.h.AMZN,
               add = T, col = 2,  display = "se", lwd = 2)
 
 ### NFLX----
 plot(NFLX_weekly$Time, NFLX_weekly$Close,
-     xlab = "Time", main = "Netflix close (local regr.)",
+     xlab = "Time", main = "Netflix trend (local regr.)",
      ylab = "", lwd = 2, type = "l")
 sm.regression(NFLX_weekly$Time, NFLX_weekly$Close, h = best.h.NFLX,
               add = T, col = 2,  display = "se", lwd = 2)
 
 ### ZOOM----
 plot(ZOOM_weekly$Time, ZOOM_weekly$Close,
-     xlab = "Time", main = "ZOOM close (local regr.)",
+     xlab = "Time", main = "ZOOM trend (local regr.)",
      ylab = "", lwd = 2, type = "l")
 sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close, h = best.h.ZOOM,
               add = T, col = 2,  display = "se", lwd = 2)
@@ -125,7 +125,7 @@ best.lambda.ZOOM <- sspline.ZOOM$lambda[which(sspline.ZOOM$MSE
 
 ### AMZN----
 plot(AMZN_weekly$Time, AMZN_weekly$Close,
-     xlab = "Time", main = "Amazon close (spline)",
+     xlab = "Time", main = "Amazon trend (spline)",
      ylab = "", type = "l", lwd = 2)
 lines(smooth.spline(AMZN_weekly$Time, AMZN_weekly$Close,
                     lambda = best.lambda.AMZN),
@@ -133,7 +133,7 @@ lines(smooth.spline(AMZN_weekly$Time, AMZN_weekly$Close,
 
 ### NFLX----
 plot(NFLX_weekly$Time, NFLX_weekly$Close,
-     xlab = "Time", main = "Netflix close (spline)",
+     xlab = "Time", main = "Netflix trend (spline)",
      ylab = "", type = "l", lwd = 2)
 lines(smooth.spline(NFLX_weekly$Time, NFLX_weekly$Close,
                     lambda = best.lambda.NFLX),
@@ -142,7 +142,7 @@ lines(smooth.spline(NFLX_weekly$Time, NFLX_weekly$Close,
 
 ### ZOOM----
 plot(ZOOM_weekly$Time, ZOOM_weekly$Close,
-     xlab = "Time", main = "ZOOM close (spline)",
+     xlab = "Time", main = "ZOOM trend (spline)",
      ylab = "", type = "l", lwd = 2)
 lines(smooth.spline(ZOOM_weekly$Time, ZOOM_weekly$Close,
                     lambda = best.lambda.ZOOM),
