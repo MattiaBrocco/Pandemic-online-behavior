@@ -113,6 +113,13 @@ best.h.ZOOM <- locreg.ZOOM$h.param[which(locreg.ZOOM$MSE
 * Closely following the days of fifth wave (beginning of maximum daily cases), there is another increase.
 
 #### Financial related events exhibited
+The **fiscal year** of NFLX corresponds to the calendar year.
+
+* COVID is mentioned in the letter to shareholders immediately, from Q1 2020. Increase in subscription is explicitly blamed on home confinement (lock down).
+* Initial increase is higher than all S&P 500 (Source: [REUTERS](https://www.reuters.com/article/us-amazon-stocks-idUSKBN22B2ZU)) and it is mainly due to the leading position in retailing (B2C online marketplace).
+* Prime Day 2020 (mid October) record for SME (3.5 billion $).
+* Q2 2021, strenghtened partnership between AWS and Salesforce.
+* Q3 2021 agreement to stream UEFA Champions League.
 
 ```{r}
 ### AMZN----
@@ -134,6 +141,13 @@ sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = best.h.AMZN,
 
 #### Financial related events exhibited
 The **fiscal year** of NFLX corresponds to the calendar year.
+
+* Decrease in stock price right before the pandemic may also be connected to the launch of Disney+ (november 2019).
+* COVID is mentioned in the letter to shareholders immediately, from Q1 2020. Increase in subscription is explicitly blamed on home confinement (lock down).
+* Squid Game released in September 2021.
+* Q1 2022 spike during downfall may be related to the ESG commitment done by Netflix (especially to fight climate change).
+* In general, the business was carried out as usual, with no drastic policies and no M&A or actions in the stock market.
+* Competitors have all been struggling and the market shares of top players didn't change too much from the beginning of the pandemic up to its "end" (even though the market has become more concentrated).
 ```{r}
 ### NFLX----
 plot(NFLX_weekly$Time, NFLX_weekly$Close,
