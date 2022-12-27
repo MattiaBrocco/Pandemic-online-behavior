@@ -9,6 +9,7 @@ library(forecast)
 library(lubridate)
 library(Metrics)
 
+source("non_parametric_trends.R")
 
 # Mattia --------------------------------------------------------------------
 source("support.R")
