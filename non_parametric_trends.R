@@ -37,12 +37,12 @@ loess.AMZN.best <- loess(AMZN_weekly$Close~seq(1, length(AMZN_weekly$Close)),
                                                         min(loess.AMZN$MSE))],
                          degree = 2)
 
+j.AMZN <- order(AMZN_weekly$Time)
 plot(AMZN_weekly$Time, AMZN_weekly$Close,
      type = "l", lwd = 2, xlab = "Time", ylab = "",
      main = "Amazon trend (loess)")
-j.AMZN <- order(AMZN_weekly$Time)
 lines(AMZN_weekly$Time[j.AMZN],loess.AMZN.best$fitted[j.AMZN],
-      col = 2, lwd = 2)
+      col = 2, lwd = 3)
 
 
 ### NFLX----
@@ -67,10 +67,11 @@ loess.ZOOM.best <- loess(ZOOM_weekly$Close~seq(1, length(ZOOM_weekly$Close)),
                                   min(loess.ZOOM$MSE))],
                          degree = 2)
 
+j.ZOOM <- order(ZOOM_weekly$Time)
 plot(ZOOM_weekly$Time, ZOOM_weekly$Close, type = "l",
      lwd = 2, xlab = "Time", ylab = "",
      main = "ZOOM trend (loess)")
-j.ZOOM <- order(ZOOM_weekly$Time)
+#j.ZOOM <- order(ZOOM_weekly$Time)
 lines(ZOOM_weekly$Time[j.ZOOM],
       loess.ZOOM.best$fitted[j.ZOOM], col = 2, lwd = 2)
 
@@ -175,4 +176,60 @@ setNames(c(min(loess.ZOOM$MSE), min(locreg.ZOOM$MSE),
 best.h.ZOOM
 cat("For ZOOM trends, best model is Local Regression with h =", best.h.ZOOM, "\n")
 # best model for ZOOM: local regression, with h = 7
+
+### CONFRONTO----
+###AMZN----
+plot(AMZN_weekly$Time, AMZN_weekly$Close,
+     xlab = "Time", main = "Amazon Trend - Confronting Models",
+     ylab = "", lwd = 2, type = "l")
+
+lines(smooth.spline(AMZN_weekly$Time, AMZN_weekly$Close,
+                    lambda = best.lambda.AMZN),
+      col = "#FFD700", lwd = 2)
+sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = best.h.AMZN,
+              add = T, col = "#FFA500", lwd = 2)
+lines(AMZN_weekly$Time[j.AMZN],loess.AMZN.best$fitted[j.AMZN],
+      col = "#FF0000", lwd = 2)
+
+legend("topright", legend=c("Smooth splines", "Local Regression", "LOESS (BEST MODEL)"),
+      col=c("#FFA500", "#FFD700", "#FF0000"), lty=1, cex=0.55)
+
+###NFLX----
+
+plot(NFLX_weekly$Time, NFLX_weekly$Close,
+     xlab = "Time", main = "Netflix trend - Confronting Models",
+     ylab = "", lwd = 2, type = "l")
+
+lines(smooth.spline(NFLX_weekly$Time, NFLX_weekly$Close,
+                    lambda = best.lambda.NFLX),
+      col = "#FFD700", lwd = 2)
+
+lines(NFLX_weekly$Time[j.NFLX],
+      loess.NFLX.best$fitted[j.NFLX], col = "#FFA500", lwd = 2)
+
+sm.regression(NFLX_weekly$Time, NFLX_weekly$Close, h = best.h.NFLX,
+              add = T, col = 2, lwd = 2)
+
+legend("topright", legend=c("Smooth splines", "LOESS", "Local Regression (BEST MODEL)"),
+       col=c("#FFD700", "#FFA500", "#FF0000"), lty=1, cex=0.55)
+
+###ZOOM----
+
+plot(ZOOM_weekly$Time, ZOOM_weekly$Close,
+     xlab = "Time", main = "ZOOM trend - Confronting Models",
+     ylab = "", lwd = 2, type = "l")
+
+lines(smooth.spline(ZOOM_weekly$Time, ZOOM_weekly$Close,
+                    lambda = best.lambda.ZOOM),
+      col = "#FFD700", lwd = 2)
+
+
+lines(ZOOM_weekly$Time[j.ZOOM],
+      loess.ZOOM.best$fitted[j.ZOOM], col = "#FFA500", lwd = 2)
+
+sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close, h = best.h.ZOOM,
+              add = T, col = 2, lwd = 2)
+
+legend("topright", legend=c("Smooth splines", "LOESS", "Local Regression (BEST MODEL)"),
+       col=c("#FFD700", "#FFA500", "#FF0000"), lty=1, cex=0.55)
 
