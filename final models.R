@@ -86,10 +86,9 @@ compl_ds = data.frame(as.numeric(Google_Trends$Amazon), as.numeric(Google_Trends
 library(GGally)
 ggpairs(compl_ds, title="correlogram with ggpairs()") 
 
-library("PerformanceAnalytics")
-chart.Correlation(compl_ds, histogram=TRUE, pch=19)
+#library("PerformanceAnalytics")
+#chart.Correlation(compl_ds, histogram=TRUE, pch=19)
 
-boxplot(AMZN)
 par(mfrow=c(2,3))
 boxplot(AMZN, col="dark blue", main="Amazon Stock")
 boxplot(NFLX, col="dark red", main="Netflix Stock")
@@ -105,11 +104,13 @@ ggseasonplot(AMZN, polar=TRUE)
 #there is a trend but not an importatnt seasonality
 
 #TSLM
-tslm_amzn<- tslm(AMZN~trend+amazon+ZM+NFLX) 
+tslm_amzn<- tslm(AMZN~trend+NFLX+ZM+amazon) 
 summary(tslm_amzn)
+durbinWatsonTest(tslm_amzn)
+par(mfrow=c(1,1))
 plot(AMZN)
 lines(fitted(tslm_amzn), col=2)
-tsdisplay(residuals(tslm_amzn))
+#tsdisplay(residuals(tslm_amzn))
 rmse_amzn_tslm = rmse(AMZN, fitted(tslm_amzn))
 aic_amzn_tslm = AIC(tslm_amzn)
 mape_amzn_tslm = MAPE(AMZN, fitted(tslm_amzn))
@@ -128,20 +129,6 @@ Pacf(AMZN)
 
 #there is an exponential decline in Acf and there is a significant spike at lag 1 in PACF and nothing else
 #so we consider an Arima(p,d,0)
-
-arima1_amzn<- Arima(AMZN, order=c(1,1,0))
-resid1_amzn<- residuals(arima1_amzn)
-tsdisplay(resid1_amzn)
-plot(AMZN, ylab="AMZN_Close", type="l")
-lines(fitted(arima1_amzn), col=2)
-for1_amzn<- forecast(arima1_amzn, h = 20)
-plot(for1_amzn)
-aic_amzn_arima = AIC(arima1_amzn)
-aic_amzn_arima
-rmse_amzn_arima = rmse(AMZN, fitted(arima1_amzn))
-rmse_amzn_arima
-mape_amzn_arima = MAPE(AMZN, fitted(arima1_amzn))
-mape_amzn_arima
 
 #AUTO_ARIMA with diff
 auto_arima_s_amzn<- auto.arima(AMZN, D = 1)
@@ -190,17 +177,6 @@ mape_amzn_sarima
 ####GAM----
 tt<- (1:length(AMZN))
 
-g0_a <- gam(AMZN~(tt)+(NFLX)+(ZM)+(amazon))
-summary(g0_a)
-par(mfrow=c(2,2))
-plot(g0_a, se=T)
-aic_amzn_gam = AIC(g0_a)
-aic_amzn_gam
-rmse_amzn_gam = rmse(AMZN, g0_a$fitted.values)
-rmse_amzn_gam
-mape_amzn_gam = MAPE(AMZN, g0_a$fitted.values)
-mape_amzn_gam
-
 g3_a <- gam(AMZN~s(tt)+s(NFLX)+s(ZM)+s(amazon))
 summary(g3_a)
 par(mfrow=c(2,2))
@@ -213,7 +189,7 @@ mape_amzn_gam_nza = MAPE(AMZN, g3_a$fitted.values)
 mape_amzn_gam_nza
 
 # Netflix - Autocorrelation and TSLM------------------------------------------------------------------------------
-
+par(mfrow=c(1,1))
 acf(NFLX, lag.max=120)
 pacf(NFLX, lag.max=120)
 
@@ -221,29 +197,16 @@ plot(decompose(NFLX))
 ggseasonplot(NFLX)
 ggseasonplot(NFLX, polar=TRUE)
 
-#TSLM with AMZN
-tslm_a_nflx<- tslm(NFLX~trend+AMZN) 
-summary(tslm_a_nflx)
-plot(NFLX)
-lines(fitted(tslm_a_nflx), col=2)
-plot(residuals(tslm_a_nflx))
-rmse_nflx_tslm_a = rmse(NFLX, fitted(tslm_a_nflx))
-rmse_nflx_tslm_a
-aic_nflx_tslm_a = AIC(tslm_a_nflx)
-aic_nflx_tslm_a
-mape_nflx_tslm_a = MAPE(NFLX, fitted(tslm_a_nflx))
-mape_nflx_tslm_a
-
-#TSLM with all features
-tslm_gtnflx_nflx<- tslm(NFLX~trend+netflix+ZM+AMZN) 
+#TSLM with AMAZON
+tslm_gtnflx_nflx<- tslm(NFLX~trend+AMZN) 
 summary(tslm_gtnflx_nflx)
 plot(NFLX)
 lines(fitted(tslm_gtnflx_nflx), col=2)
 plot(residuals(tslm_gtnflx_nflx))
 rmse_nflx_tslm_gtnflx = rmse(NFLX, fitted(tslm_gtnflx_nflx))
 rmse_nflx_tslm_gtnflx
-AIC(tslm_gtnflx_nflx)
-MAPE(NFLX, fitted(tslm_gtnflx_nflx))
+aic_nflx_tslm_gtnflx <- AIC(tslm_gtnflx_nflx)
+mape_nflx_tslm_gtnflx <- MAPE(NFLX, fitted(tslm_gtnflx_nflx))
 
 # Netflix - Models --------------------------------------------------------------------------------------------
 ####ARIMA MODELS----
@@ -257,7 +220,7 @@ Pacf(NFLX)
 
 #ARIMA
 #c(1,1,0) o c(4,1,0)?
-arima1_nflx<- Arima(NFLX, order=c(1,1,0))
+arima1_nflx<- Arima(NFLX, order=c(4,1,0))
 resid1_nflx<- residuals(arima1_nflx)
 tsdisplay(resid1_nflx)
 plot(NFLX, ylab="NFLX_Close", type="l")
@@ -320,19 +283,7 @@ mape_nflx_sarima
 ####GAM----
 tt<- (1:length(NFLX))
 
-g2_n <- gam(NFLX~s(tt)+s(AMZN)+s(ZM)+s(netflix))
-summary(g2_n)
-par(mfrow=c(2,2))
-plot(g2_n, se=T)
-aic_nflx_gam_nz = AIC(g2_n)
-aic_nflx_gam_nz
-rmse_nflx_gam_nz = rmse(NFLX, g2_n$fitted.values)
-rmse_nflx_gam_nz
-mape_nflx_gam_nz = MAPE(NFLX, g2_n$fitted.values)
-mape_nflx_gam_nz
-
 g5_n <- gam(NFLX~lo(tt)+lo(AMZN)+lo(ZM))
-# aggiungendo anche lo(netflix) -> leggermente meglio rmse e mape, leggermente peggio aic
 summary(g5_n)
 par(mfrow=c(2,2))
 plot(g5_n, se=T)
@@ -358,25 +309,12 @@ par(mfrow=c(1,1))
 plot(ZM)
 lines(fitted(tslm_a_zm), col=2)
 plot(residuals(tslm_a_zm))
-rmse_zm_tslm_a = rmse(ZM[1:189], tslm_a_zm$fitted.values[1:189])
+rmse_zm_tslm_a = rmse(ZM, fitted(tslm_a_zm))
 rmse_zm_tslm_a
 aic_zm_tslm_a = AIC(tslm_a_zm)
 aic_zm_tslm_a
 mape_zm_tslm_a = MAPE(ZM, fitted(tslm_a_zm))
 mape_zm_tslm_a
-
-#TSLM with google_trends, zoom, AMZN
-tslm_gtzm_zm<- tslm(ZM~trend+zoom+AMZN+season) 
-summary(tslm_gtzm_zm)
-plot(ZM)
-lines(fitted(tslm_gtzm_zm), col=2)
-plot(residuals(tslm_gtzm_zm))
-rmse_zm_tslm_gtzm = rmse(ZM, fitted(tslm_gtzm_zm))
-rmse_zm_tslm_gtzm
-aic_zm_tslm_gtzm = AIC(tslm_gtzm_zm)
-aic_zm_tslm_gtzm
-mape_zm_tslm_gtzm = MAPE(ZM, fitted(tslm_gtzm_zm))
-mape_zm_tslm_gtzm
 
 # Zoom - Models --------------------------------------------------------------------------------------------
 ####ARIMA MODELS----
@@ -392,22 +330,6 @@ Pacf(ZM)
 # PACF lags and gradually falling ACF, we can say that the series is an AR(2) process. 
 # The lags of AR are determined by the number of significant lags of PACF.
 
-#ARIMA 
-arima1_zm<- Arima(ZM, order=c(2,1,0))
-resid1_zm<- residuals(arima1_zm)
-tsdisplay(resid1_zm)
-plot(ZM, ylab="ZM_Close", type="l")
-lines(fitted(arima1_zm), col=2)
-for1_zm<- forecast(arima1_zm, h = 10)
-plot(for1_zm)
-for1_zm
-aic_zm_arima = AIC(arima1_zm)
-aic_zm_arima
-rmse_zm_arima = rmse(ZM, fitted(arima1_zm))
-rmse_zm_arima
-mape_zm_arima = MAPE(ZM, fitted(arima1_zm))
-mape_zm_arima
-
 #AUTO_ARIMA
 auto_arima_zm<- auto.arima(ZM)
 auto_arima_zm
@@ -421,22 +343,18 @@ aic_zm_autoarima = AIC(auto_arima_zm)
 aic_zm_autoarima
 rmse_zm_autoarima = rmse(ZM, fitted(auto_arima_zm))
 rmse_zm_autoarima
-mape_zm_autoarima = MAPE(ZM, fitted(auto_arima_zm))
-mape_zm_autoarima
 
 #SARIMA
 sarima1_zm<- Arima(ZM, order=c(0,1,0), seasonal=c(1,1,0))
 resid1_zm<- residuals(sarima1_zm)
 plot(ZM, ylab="ZM_Close", type="l")
 lines(fitted(sarima1_zm), col=2)
-for1_s_zm<- forecast(sarima1_zm, h = 10)
+for1_s_zm<- forecast(sarima1_zm, h = 20)
 plot(for1_s_zm)
 aic_zm_sarima = AIC(sarima1_zm)
 aic_zm_sarima
 rmse_zm_sarima = rmse(ZM, fitted(sarima1_zm))
 rmse_zm_sarima
-mape_zm_sarima = MAPE(ZM, fitted(sarima1_zm))
-mape_zm_sarima
 
 ####GAM----
 tt<- (1:length(ZM))
@@ -452,13 +370,3 @@ rmse_zm_gam_nza
 mape_zm_gam_nza = MAPE(ZM, g3_n$fitted.values)
 mape_zm_gam_nza
 
-g4_n <- gam(ZM~lo(tt)+lo(NFLX))
-summary(g4_n)
-par(mfrow=c(2,2))
-plot(g4_n, se=T)
-aic_zm_gam_lo_n = AIC(g4_n)
-aic_zm_gam_lo_n
-rmse_zm_gam_lo_n = rmse(ZM, g4_n$fitted.values)
-rmse_zm_gam_lo_n
-mape_zm_gam_lo_n = MAPE(ZM, g4_n$fitted.values)
-mape_zm_gam_lo_n
