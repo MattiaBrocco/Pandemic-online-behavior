@@ -8,8 +8,9 @@ library(ggplot2)
 library(forecast)
 library(lubridate)
 library(Metrics)
-
+##source("non_parametric_stocks.R")
 source("non_parametric_trends.R")
+
 
 # Mattia --------------------------------------------------------------------
 source("support.R")
@@ -119,6 +120,24 @@ ggseasonplot(seas_amz, polar=TRUE) +
 
 autoplot(amazon)
 
+seas_zoom= ts(Google_Trends$Netflix[4:260], freq=52,
+              start=decimal_date(ymd("2018-1-6")))
+ggseasonplot(seas_zoom, main = "Seasonal Plot: Netflix")
+ggseasonplot(seas_amz, polar=TRUE) +
+  ylab("Netflix Trends") +
+  ggtitle("Netflix Trend: a weekly overview")
+
+autoplot(netflix)
+
+seas_zoom= ts(Google_Trends$Zoom[4:260], freq=52,
+             start=decimal_date(ymd("2018-1-6")))
+ggseasonplot(seas_zoom, main = "Seasonal Plot: Zoom")
+ggseasonplot(seas_amz, polar=TRUE) +
+  ylab("Amazon Trends") +
+  ggtitle("Amazon Trend: a weekly overview")
+
+autoplot(zoom)
+
 # Amazon - Autocorrelation and TSLM------------------------------------------------------------------------------
 
 acf(amazon, lag.max = 260) #There is seasonality
@@ -217,23 +236,23 @@ amazon %>%
 ####NON PARAMETRIC MODELS----
 
 #####Local Regression----
-library(sm)
+
 plot(Google_Trends$Time, amazon, type="l",xlab="Time", ylab="Amazon Trend", lwd=2)
-loc_r_amzn = sm.regression(Google_Trends$Time, amazon,   h = 10, add = T, col=2,  display="se")
-rmse_amzn_locr = rmse(amazon, loc_r_amzn$estimate)
-rmse_amzn_locr
+loc_r_amzn = sm.regression(Google_Trends$Time, amazon,   h = 10, add = T, col=2,  display="se", lwd =2)
+#rmse_amzn_locr = rmse(amazon, loc_r_amzn$estimate)
+#rmse_amzn_locr
 
 #####Loess----
 plot(Google_Trends$Time, amazon, xlab="Time", ylab="Amazon Trend", type="l",lwd = 2)
-lo1 <- loess.smooth(Google_Trends$Time, amazon, span=0.2)
-lines(lo1, col=2)
+lo1 <- loess.smooth(Google_Trends$Time, amazon, span=0.1)
+lines(lo1, col=2, lwd = 2)
 rmse_amzn_loess = rmse(amazon, lo1$y)
 rmse_amzn_loess
 
 #####Regression splines----
-library(splines)
-plot(Google_Trends$Time, amazon, xlab="Time", ylab="Amazon close", type = "l",lwd = 2)
-m1<-lm(amazon~bs(Google_Trends$Time, df=15, degree=3)) 
+
+plot(Google_Trends$Time, amazon, xlab="Time", ylab="Amazon Trend", type = "l",lwd = 2)
+m1<-lm(amazon~bs(Google_Trends$Time, df=60, degree=2)) 
 xxx<-seq(min(Google_Trends$Time),max(Google_Trends$Time),length=260)
 regspl_amzn<-predict(m1, data.frame(x=xxx))
 lines(xxx,regspl_amzn,col=2, lwd = 2)
@@ -242,10 +261,9 @@ rmse_amzn_regspl
 
 #####Smoothing splines----
 
-#0.0001 o 0.00001?
-plot(Google_Trends$Time, amazon, xlab="Time", ylab="Amazon close", type = "l",lwd = 2)
-s <- smooth.spline(Google_Trends$Time, amazon, lambda=0.00001)
-lines(s, col=2)
+plot(Google_Trends$Time, amazon, xlab="Time", ylab="Amazon Trend", type = "l",lwd = 2)
+s <- smooth.spline(Google_Trends$Time, amazon, lambda=1e-05)
+lines(s, col=2, lwd = 2)
 rmse_amzn_smospl = rmse(amazon, s$y)
 rmse_amzn_smospl
 
@@ -253,36 +271,35 @@ rmse_amzn_smospl
 tt<- (1:length(amazon))
 seas <- factor(c(rep(1:52,length(amazon)/52))) 
 length(seas)
-seas
 
 mod2 <- lm(amazon~ tt+seas+netflix)
 summary(mod2)
 AIC(mod2)
+rmse(amazon, mod2$fitted.values)
 
-#g3 = gam(amazon~seas+netflix)
-#g3 = gam(amazon~nflx.ts[2:261])
-#g3 = gam(amazon~lo(netflix))
-g3 = gam(amazon~seas+lo(netflix)+lo(tt)+lo(zoom)+lo(AMZN))
-summary(g3)
-#par(mfrow=c(3,5))
-#plot(g3, se=T) 
-#plot(g3)
-#plot(g3, type = "l")
-AIC(g3)
+#I tried some gam models, like:           #AIC      #rMSE
+g3 = gam(amazon~seas+lo(tt)+lo(AMZN)) #1567.063-3.913047
+g3 = gam(amazon~seas+lo(tt)+lo(AMZN)+lo(zoom)) #1458.46-3.06
 
-g3m = ts(g3$fitted.values, freq=52, start=decimal_date(ymd("2017-12-10")))
-plot(amazon, lwd = 2)
-lines(g3m, col = 2, lwd = 2, se = T)
-plot(g3, se = T)
-
-#RESIDUALS
-plot(g3$residuals, type = "o", col = "blue")
+#BEST MODEL (according to AIC and RMSE) is:
+g3 = gam(amazon~seas+lo(tt)+lo(AMZN)+lo(zoom)+lo(ZM)+lo(netflix)+lo(NFLX)) #1450.783-2.939919
 
 #EVALUATION
 AIC(g3)
-rmse_amzn_gam = rmse(amazon, g3$fitted.values)
-rmse_amzn_gam
+rmse(amazon, g3$fitted.values)
 
+summary(g3)
+
+#plots
+g3m = ts(g3$fitted.values, freq=52, start=decimal_date(ymd("2017-12-10")))
+plot(amazon, lwd = 2)
+lines(g3m, col = 2, lwd = 2)
+
+par(mfrow=c(3,2))
+plot(g3, se=T)
+
+#RESIDUALS
+plot(g3$residuals, type = "o", col = "blue")
 
 # Netflix - Autocorrelation and TSLM------------------------------------------------------------------------------
 
@@ -406,21 +423,21 @@ rmse_nflx_sarima
 
 ####NON PARAMETRIC MODELS----
 #####Local Regression----
-plot(Google_Trends$Time, zoom, type="l",xlab="Time", ylab="Amazon Trend", lwd=2)
-loc_r_zm = sm.regression(Google_Trends$Time, zoom,   h = 10, add = T, col=2,  display="se")
-rmse_zm_locr = rmse(zoom, loc_r_zm$estimate)
-rmse_zm_locr
+plot(Google_Trends$Time, netflix, type="l",xlab="Time", ylab="Netflix Trend", lwd=2)
+loc_r_nflx = sm.regression(Google_Trends$Time, netflix,   h = 10, add = T, col=2,  display="se", lwd = 2)
+#rmse_nflx_locr = rmse(netflix, loc_r_nflx$estimate)
+#rmse_nflx_locr
 
 #####Loess----
-plot(Google_Trends$Time, netflix, xlab="Time", ylab="Amazon Trend", type="l",lwd = 2)
-lo1 <- loess.smooth(Google_Trends$Time, netflix, span=0.2)
-lines(lo1, col=2)
-rmse_amzn_loess = rmse(netflix, lo1$y)
-rmse_amzn_loess
+plot(Google_Trends$Time, netflix, xlab="Time", ylab="Netflix Trend", type="l",lwd = 2)
+lo1 <- loess.smooth(Google_Trends$Time, netflix, span=0.1)
+lines(lo1, col=2, lwd=2)
+#rmse_amzn_loess = rmse(netflix, lo1$y)
+#rmse_amzn_loess
 
 #####Regression splines----
-plot(Google_Trends$Time, netflix, xlab="Time", ylab="Amazon close", type = "l",lwd = 2)
-m1<-lm(netflix~bs(Google_Trends$Time, df=15, degree=3)) 
+plot(Google_Trends$Time, netflix, xlab="Time", ylab="Netflix Trend", type = "l",lwd = 2)
+m1<-lm(netflix~bs(Google_Trends$Time, df=70, degree=2)) #Overfitta!
 xxx<-seq(min(Google_Trends$Time),max(Google_Trends$Time),length=260)
 regspl_nflx <-predict(m1, data.frame(x=xxx))
 lines(xxx,regspl_nflx,col=2, lwd = 2)
@@ -428,9 +445,9 @@ rmse_nflx_regspl = rmse(netflix, regspl_nflx)
 rmse_nflx_regspl
 
 #####Smoothing splines----
-plot(Google_Trends$Time, netflix, xlab="Time", ylab="Amazon close", type = "l",lwd = 2)
-s <- smooth.spline(Google_Trends$Time, netflix, lambda=0.00001)
-lines(s, col=2)
+plot(Google_Trends$Time, netflix, xlab="Time", ylab="Netflix Trend", type = "l",lwd = 2)
+s <- smooth.spline(Google_Trends$Time, netflix, lambda=1e-05)
+lines(s, col=2, lwd = 2)
 rmse_amzn_smospl = rmse(netflix, s$y)
 rmse_amzn_smospl
 
@@ -442,17 +459,23 @@ mod2 <- lm(netflix~ tt+seas+amazon)
 summary(mod2)
 AIC(mod2)
 
-#g3 = gam(amazon~seas+netflix)
-#g3 = gam(amazon~nflx.ts[2:261])
-#g3 = gam(amazon~lo(netflix))
-g3 = gam(netflix~seas+lo(amazon)+lo(tt)+lo(zoom)+lo(NFLX))
-summary(g3)
-#par(mfrow=c(3,5))
-#plot(g3, se=T) 
-#plot(g3)
-#plot(g3, type = "l")
-#AIC(g3)
+#I tried some gam models, like:                            #AIC      #rMSE
 
+g3 = gam(netflix~seas+lo(amazon)+lo(tt)+lo(zoom)+lo(NFLX))#1066.346, 1.448707
+g3 = gam(netflix~seas+lo(tt)+lo(NFLX)+lo(zoom)+lo(ZM))#1058.492,1.422696
+
+#La svolta è l'inserimento di (zoom), mentre AMZN peggiora il modello
+
+#BEST MODEL (according to AIC and RMSE) is:
+g3 = gam(netflix~seas+lo(tt)+lo(NFLX)+lo(zoom)+lo(ZM)+lo(amazon))  #1056.377,1.397806
+
+#EVALUATION
+AIC(g3)
+rmse(netflix, g3$fitted.values)
+
+summary(g3)
+
+#PLOTS
 g3m = ts(g3$fitted.values, freq=52, start=decimal_date(ymd("2017-12-10")))
 plot(netflix, lwd = 2)
 lines(g3m, col = 2, lwd = 2, se = T)
@@ -460,12 +483,6 @@ plot(g3, se = T)
 
 #RESIDUALS
 plot(g3$residuals, type = "o", col = "blue")
-
-#EVALUATION
-AIC(g3)
-rmse_nflx_gam = rmse(netflix, g3$fitted.values)
-rmse_nflx_gam
-
 
 # Zoom - Autocorrelation and TSLM------------------------------------------------------------------------------
 
@@ -590,31 +607,37 @@ rmse_nflx_sarima
 ####NON PARAMETRIC MODELS----
 
 #####Local Regression----
-plot(ZM_weekly$Time, ZM_weekly$Close, type="l", xlab="Time", ylab="Zoom close", lwd=2)
-loc_r_zm = sm.regression(ZM_weekly$Time, ZM_weekly$Close, h = 10, add = T, col=2,  display="se", lwd=2, ngrid=190)
-rmse_zm_locr = rmse(ZM_weekly$Close, loc_r_zm$estimate)
-rmse_zm_locr
+plot(Google_Trends$Time, zoom, type="l",xlab="Time", ylab="Zoom Trend", lwd=2)
+loc_r_zm = sm.regression(Google_Trends$Time, zoom,   h = 7, add = T, col=2,  display="se", lwd = 2)
+#rmse_zm_locr = rmse(zoom, loc_r_zm$estimate)
+#rmse_zm_locr
 
 #####Loess----
-plot(Google_Trends$Time, zoom, xlab="Time", ylab="Amazon Trend", type="l",lwd = 2)
-lo1 <- loess.smooth(Google_Trends$Time, zoom, span=0.2)
-lines(lo1, col=2)
-rmse_zm_loess = rmse(zoom, lo1$y)
+plot(Google_Trends$Time, zoom, xlab="Time", ylab="Zoom Trend", type="l",lwd = 2)
+##lines(lo2$fitted, col=2, lwd =2)
+##lo2 <- loess.smooth(Google_Trends$Time, zoom, span=0.1)
+lo2 = loess(zoom~seq(1, length(zoom)),
+            span = 0.1, degree = 2)
+lines(Google_Trends$Time,lo2$fitted, col=2, lwd =2)
+##lines(Google_Trends$Time,loess.ZOOM.best$fitted[j.ZOOM], col = 2, lwd = 2)
+
+#EVALUATION
+rmse_zm_loess = rmse(zoom, lo2$fitted)
 rmse_zm_loess
 
 #####Regression splines----
-m1<-lm(zoom~bs(Google_Trends$Time, df=15, degree=3)) 
+m1<-lm(zoom~bs(Google_Trends$Time, df=60, degree=2)) #Overfitta!
 xxx<-seq(min(Google_Trends$Time),max(Google_Trends$Time),length=260)
 regspl_zm<-predict(m1, data.frame(x=xxx))
-plot(Google_Trends$Time, zoom, xlab="Time", ylab="Amazon close", type = "l",lwd = 2)
+plot(Google_Trends$Time, zoom, xlab="Time", ylab="Zoom Trend", type = "l",lwd = 2)
 lines(xxx,regspl_zm,col=2, lwd = 2)
 rmse_zm_regspl = rmse(zoom, regspl_zm)
 rmse_zm_regspl
 
 #####Smoothing splines----
-plot(Google_Trends$Time, zoom, xlab="Time", ylab="Amazon close", type = "l",lwd = 2)
-s <- smooth.spline(Google_Trends$Time, zoom, lambda=0.00001)
-lines(s, col=2)
+plot(Google_Trends$Time, zoom, xlab="Time", ylab="Zoom Trend", type = "l",lwd = 2)
+s <- smooth.spline(Google_Trends$Time, zoom, lambda=1e-05)
+lines(s, col=2, lwd = 2)
 rmse_zm_smospl = rmse(zoom, s$y)
 rmse_zm_smospl
 
@@ -626,14 +649,22 @@ mod2 <- lm(zoom~tt+amazon)
 summary(mod2)
 AIC(mod2)
 
-g3 = gam(zoom~lo(amazon)+lo(tt)+lo(netflix)+lo(NFLX))
-summary(g3)
-#par(mfrow=c(3,5))
-#plot(g3, se=T) 
-#plot(g3)
-#plot(g3, type = "l")
-#AIC(g3)
+#I tried some gam models, like:                            #AIC      #rMSE
 
+g3 = gam(zoom~lo(tt)+lo(ZM) + lo(netflix)+lo(amazon))#1056.377, 1.583173
+g3 = gam(zoom~lo(tt)+lo(NFLX)+lo(ZM)+lo(amazon)+lo(AMZN))# 1349.429, 2.991495
+#togliere netflix peggiora moltissimo il modello
+
+#BEST MODEL (according to AIC and RMSE) is:
+g3 = gam(zoom~lo(tt)+lo(netflix)+lo(NFLX)+lo(ZM)+lo(amazon)+lo(AMZN))#1026.188,1.583173
+
+#EVALUATION
+AIC(g3)
+rmse(zoom, g3$fitted.values)
+
+summary(g3)
+
+#PLOTS
 g3m = ts(g3$fitted.values, freq=52, start=decimal_date(ymd("2017-12-10")))
 plot(zoom, lwd = 2)
 lines(g3m, col = 2, lwd = 2, se = T)
@@ -642,7 +673,3 @@ plot(g3, se = T)
 #RESIDUALS
 plot(g3$residuals, type = "o", col = "blue")
 
-#EVALUATION
-AIC(g3)
-rmse_zm_gam = rmse(zoom, g3$fitted.values)
-rmse_zm_gam
