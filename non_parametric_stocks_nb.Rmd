@@ -4,7 +4,7 @@ output:
   html_document:
     df_print: paged
 ---
-
+## Intro
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results=FALSE}
 library(sm)
 library(gam)
@@ -26,6 +26,7 @@ source("complexitynonparam.R")
 AMZN_weekly <- read.timeseries.stocks("./data/AMZN_weekly.csv")
 NFLX_weekly <- read.timeseries.stocks("./data/NFLX_weekly.csv")
 ZOOM_weekly <- read.timeseries.stocks("./data/ZM_weekly.csv")
+ZOOM_weekly <- bakcast.ZOOM(ZOOM_weekly)
 ```
 
 ## Loess
@@ -183,6 +184,23 @@ plot(ZOOM_weekly$Time, ZOOM_weekly$Close,
 sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close, h = best.h.ZOOM,
               add = T, col = 2,  display = "se", lwd = 2)
 ```
+```{r}
+plot(sm.regression(NFLX_weekly$Time, NFLX_weekly$Close, h = best.h.ZOOM,
+                   display = "none")$estimate,
+     type = "l", lwd = 2, ylim = c(0, 700), col = "#06D6A0", xaxt = "n",
+     ylab = "Adjusted Close Price", xlab = "")
+lines(sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = best.h.ZOOM,
+                    display = "none")$estimate,
+      type = "l", lwd = 2, col = "#394053")
+lines(sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close, h = best.h.ZOOM,
+                    display = "none")$estimate,
+      type = "l", lwd = 2, col = "#118AB2")
+legend(0, 700, c("NFLX", "AMZN", "ZOOM"),
+       col = c("#06D6A0", "#394053", "#118AB2"), lty = 1, lwd = 2)
+axis(1, at = seq(0, 50, length.out = 6),
+     labels = NFLX_weekly$Time[round(seq(1, 260, length.out = 6))])
+```
+
 
 
 ## Splines
@@ -233,32 +251,42 @@ lines(smooth.spline(ZOOM_weekly$Time, ZOOM_weekly$Close,
       col = 2, lwd = 2)
 ```
 
+## BEST MODELS
+
 ```{r}
 # BEST MODELS ----
 
 ### AMZN----
-setNames(c(min(loess.AMZN$MSE), min(locreg.AMZN$MSE),
-           min(sspline.AMZN$MSE)),
-         c("Loess", "Loc. Regr.", "Spline"))
+round(rbind(setNames(c(min(loess.AMZN$MSE), min(locreg.AMZN$MSE),
+                       min(sspline.AMZN$MSE)),
+                     c("Loess", "Loc. Regr.", "Spline")),
+            setNames(c(min(loess.AMZN$MAPE), min(locreg.AMZN$MAPE),
+                       min(sspline.AMZN$MAPE)),
+                     c("Loess", "Loc. Regr.", "Spline"))), 3)
 best.h.AMZN
 # best model for AMZN: local regression, with h = 10
 
 
 ### NFLX----
-setNames(c(min(loess.NFLX$MSE), min(locreg.NFLX$MSE),
-           min(sspline.NFLX$MSE)),
-         c("Loess", "Loc. Regr.", "Spline"))
+round(rbind(setNames(c(min(loess.NFLX$MSE), min(locreg.NFLX$MSE),
+                       min(sspline.NFLX$MSE)),
+                     c("Loess", "Loc. Regr.", "Spline")),
+            setNames(c(min(loess.NFLX$MAPE), min(locreg.NFLX$MAPE),
+                       min(sspline.NFLX$MAPE)),
+                     c("Loess", "Loc. Regr.", "Spline"))), 3)
 best.h.NFLX
 # best model for NFLX: local regression, with h = 10
 
 ### ZOOM----
-setNames(c(min(loess.ZOOM$MSE), min(locreg.ZOOM$MSE),
-           min(sspline.ZOOM$MSE)),
-         c("Loess", "Loc. Regr.", "Spline"))
+round(rbind(setNames(c(min(loess.ZOOM$MSE), min(locreg.ZOOM$MSE),
+                       min(sspline.ZOOM$MSE)),
+                     c("Loess", "Loc. Regr.", "Spline")),
+            setNames(c(min(loess.ZOOM$MAPE), min(locreg.ZOOM$MAPE),
+                       min(sspline.ZOOM$MAPE)),
+                     c("Loess", "Loc. Regr.", "Spline"))), 3)
 best.h.ZOOM
 # best model for ZOOM: local regression, with h = 7
 ```
-
 
 
 

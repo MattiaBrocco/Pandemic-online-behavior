@@ -5,8 +5,10 @@ require(lmtest)
 require(DIMORA)
 require(splines)
 require(ggplot2)
+require(Metrics)
 require(forecast)
 require(lubridate)
+require(MLmetrics)
 
 # SOURCE FOR BIAS FORMULA
 # http://rafalab.dfci.harvard.edu/pages/754/section-05.pdf
@@ -15,7 +17,9 @@ require(lubridate)
 loess.bias.var <- function(dX){
   bias.v <- c()
   var.v <- c()
-  error.v <- c()
+  mse.v <- c()
+  mape.v <- c()
+  
   res.v <- c()
   span.i <- c()
   deg.i <- c()
@@ -26,20 +30,27 @@ loess.bias.var <- function(dX){
     res <- resid(loessMod)
     bias2 <- sum((dX-mean(loessMod$fitted))^2)/length(dX)
     var <- mean((loessMod$fitted-mean(loessMod$fitted))^2)#/length(dX)
-    mse <- sum((loessMod$fitted-dX)^2)/length(dX)
+    mse.iter <- mse(dX, loessMod$fitted) #sum((loessMod$fitted-dX)^2)/length(dX)
+    
+    p.mape <- abs((dX-loessMod$fitted)/dX)
+    p.mape[is.na(p.mape)] <- 0 # predicted and actual are zero
+    # actual = 0, pred != 0
+    p.mape[is.infinite(p.mape)] <- mean(p.mape[!is.infinite(p.mape)])
+    mape.iter <- sum(p.mape)/length(p.mape)
     
     bias.v <- append(bias.v, bias2)
     var.v <- append(var.v, var)
-    error.v <- append(error.v, mse)
+    mse.v <- append(mse.v, mse.iter)
+    mape.v <- append(mape.v, mape.iter)
     res.v <- append(res.v, sum(res))
     
     span.i <- append(span.i, i)
   }
   
-  out <- cbind(span.i, bias.v, var.v, error.v, res.v)
+  out <- cbind(span.i, bias.v, var.v, mse.v, mape.v, res.v)
   out <- data.frame(out)
-  names(out) <- c("Span", "Bias",
-                  "Variance", "MSE", "SSR")
+  names(out) <- c("Span", "Bias", "Variance",
+                  "MSE", "MAPE", "SSR")
   
   best.values <- which(out$MSE == min(out$MSE))
   
@@ -62,34 +73,44 @@ locreg.bias.var <- function(data){
   bias.v <- c()
   var.v <- c()
   error.v <- c()
+  mape.v <- c()
   h.i <- c()
   iter.array <- seq.int(1, 1000, 3)
   for (i in iter.array)
     {
     locreg <- sm.regression(data$Time, data$Close,
-                            h = i, display = F)
+                            h = i, display = "none")
     
     bias2 <- sum((data$Close-mean(locreg$model.y))^2)/length(data$Time)
     var <- mean((locreg$model.y-mean(locreg$model.y))^2)#/length(data$Time)
     
     interp <- approx(locreg$model.y, method = "linear",
                      rule = 2, n = length(data$Close))
-    mse <- sum((interp$y-data$Close)^2)/length(data$Close)
+    mse.iter <- mse(data$Close, interp$y)
+    # sum((interp$y-data$Close)^2)/length(data$Close)
+    
+    p.mape <- abs((data$Close-interp$y)/data$Close)
+    p.mape[is.na(p.mape)] <- 0 # predicted and actual are zero
+    # actual = 0, pred != 0
+    p.mape[is.infinite(p.mape)] <- mean(p.mape[!is.infinite(p.mape)])
+    mape.iter <- sum(p.mape)/length(p.mape)
+    
     
     bias.v <- append(bias.v, bias2)
     var.v <- append(var.v, var)
-    error.v <- append(error.v, mse)
+    error.v <- append(error.v, mse.iter)
+    mape.v <- append(mape.v, mape.iter)
     
     h.i <- append(h.i, i)
   }
-  out <- cbind(h.i, bias.v, var.v, error.v)
+  out <- cbind(h.i, bias.v, var.v, error.v, mape.v)
   out <- data.frame(out)
-  names(out) <- c("h.param", "Bias", "Variance", "MSE")
+  names(out) <- c("h.param", "Bias", "Variance", "MSE", "MAPE")
   
   best.values <- which(out$MSE == min(out$MSE))
   
-  y.lim.1 <- min(out[,-c(1, 4)])*0.95
-  y.lim.2 <- 1.05*max(out[,-c(1, 4)])
+  y.lim.1 <- min(out[,-c(1, 4, 5)])*0.95
+  y.lim.2 <- 1.05*max(out[,-c(1, 4, 5)])
   
   plot(iter.array, out$Variance,
        type = "l", ylim = c(y.lim.1, y.lim.2))
@@ -107,6 +128,7 @@ sspline.bias.var <- function(data){
   bias.v <- c()
   var.v <- c()
   error.v <- c()
+  mape.v <- c()
   lambda.i <- c()
   iter.array <- seq(1e-5, 10, length.out = 300)
   for (i in iter.array)
@@ -116,22 +138,30 @@ sspline.bias.var <- function(data){
     bias2 <- sum((data$Close-mean(ss$y))^2)/length(data$Time)
     var <- mean((ss$y-mean(ss$y))^2)#/length(data$Time)
     
-    mse <- sum((ss$y-data$Close)^2)/length(data$Close)
+    mse.iter <- mse(data$Close, ss$y) # sum((ss$y-data$Close)^2)/length(data$Close)
+    
+    p.mape <- abs((data$Close-ss$y)/data$Close)
+    p.mape[is.na(p.mape)] <- 0 # predicted and actual are zero
+    # actual = 0, pred != 0
+    p.mape[is.infinite(p.mape)] <- mean(p.mape[!is.infinite(p.mape)])
+    mape.iter <- sum(p.mape)/length(p.mape)
+    # MAPE(ss$y, data$Close)
     
     bias.v <- append(bias.v, bias2)
     var.v <- append(var.v, var)
-    error.v <- append(error.v, mse)
+    error.v <- append(error.v, mse.iter)
+    mape.v <- append(mape.v, mape.iter)
     
     lambda.i <- append(lambda.i, i)
   }
-  out <- cbind(lambda.i, bias.v, var.v, error.v)
+  out <- cbind(lambda.i, bias.v, var.v, error.v, mape.v)
   out <- data.frame(out)
-  names(out) <- c("lambda", "Bias", "Variance", "MSE")
+  names(out) <- c("lambda", "Bias", "Variance", "MSE", "MAPE")
   
   best.values <- which(out$MSE == min(out$MSE))
   
-  y.lim.1 <- min(out[,-c(1, 4)])*0.95
-  y.lim.2 <- 1.05*max(out[,-c(1, 4)])
+  y.lim.1 <- min(out[,-c(1, 4, 5)])*0.95
+  y.lim.2 <- 1.05*max(out[,-c(1, 4, 5)])
   
   plot(iter.array, out$Variance,
        type = "l", ylim = c(y.lim.1, y.lim.2))

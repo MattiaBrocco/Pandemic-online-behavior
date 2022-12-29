@@ -9,6 +9,38 @@ require(ggplot2)
 require(forecast)
 require(lubridate)
 
+#####0: Backcasting for ZOOM------
+bakcast.ZOOM <- function(data, data.ref = NFLX_weekly){
+  
+  start.ts <- ts(data$Close, freq=52,
+                 start = decimal_date(ymd("2019-04-15")))
+  rev.ts <- ts(rev(start.ts), frequency = 52,
+               start=decimal_date(ymd("2019-04-15")))
+  # Forecast
+  at.arima <- auto.arima(rev.ts, D = 1)
+  
+  # Number of new data points
+  new.x <- dim(data.ref)[1] - dim(data)[1]
+  
+  fc <- forecast(at.arima, h = new.x)
+  
+  # Reverse time again
+  fc$mean <- ts(rev(fc$mean),end=tsp(start.ts)[1] - 1/52,
+                frequency = 52)
+  fc$upper <- fc$upper[new.x:1,]
+  fc$lower <- fc$lower[new.x:1,]
+  fc$x <- start.ts
+  
+  # Final time series
+  bk.casted <- fc$mean %>% as.vector
+  bk.df <- data.frame(data.ref[1:new.x, 1], bk.casted) 
+  colnames(bk.df) = c('Time', 'Close')
+  data.out <- rbind(bk.df, data)
+  data.out$Close = pmax(data.out$Close, 0)
+  
+  return(data.out)
+}
+
 #####1: Clean stocks------
 read.timeseries.stocks <- function(path, get190 = FALSE){
   data <- read.csv(path, sep=",")
