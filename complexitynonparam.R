@@ -30,7 +30,7 @@ loess.bias.var <- function(dX){
     res <- resid(loessMod)
     bias2 <- sum((dX-mean(loessMod$fitted))^2)/length(dX)
     var <- mean((loessMod$fitted-mean(loessMod$fitted))^2)#/length(dX)
-    mse.iter <- mse(dX, loessMod$fitted) #sum((loessMod$fitted-dX)^2)/length(dX)
+    mse.iter <- rmse(dX, loessMod$fitted) #sum((loessMod$fitted-dX)^2)/length(dX)
     
     p.mape <- abs((dX-loessMod$fitted)/dX)
     p.mape[is.na(p.mape)] <- 0 # predicted and actual are zero
@@ -50,9 +50,9 @@ loess.bias.var <- function(dX){
   out <- cbind(span.i, bias.v, var.v, mse.v, mape.v, res.v)
   out <- data.frame(out)
   names(out) <- c("Span", "Bias", "Variance",
-                  "MSE", "MAPE", "SSR")
+                  "RMSE", "MAPE", "SSR")
   
-  best.values <- which(out$MSE == min(out$MSE))
+  best.values <- which(out$RMSE == min(out$RMSE))
   
   y.lim.1 <- min(out[,-c(1, 4, 5)])*0.95
   y.lim.2 <- 1.05*max(out[,-c(1, 4, 5)])
@@ -86,7 +86,7 @@ locreg.bias.var <- function(data){
     
     interp <- approx(locreg$model.y, method = "linear",
                      rule = 2, n = length(data$Close))
-    mse.iter <- mse(data$Close, interp$y)
+    mse.iter <- rmse(data$Close, interp$y)
     # sum((interp$y-data$Close)^2)/length(data$Close)
     
     p.mape <- abs((data$Close-interp$y)/data$Close)
@@ -105,9 +105,9 @@ locreg.bias.var <- function(data){
   }
   out <- cbind(h.i, bias.v, var.v, error.v, mape.v)
   out <- data.frame(out)
-  names(out) <- c("h.param", "Bias", "Variance", "MSE", "MAPE")
+  names(out) <- c("h.param", "Bias", "Variance", "RMSE", "MAPE")
   
-  best.values <- which(out$MSE == min(out$MSE))
+  best.values <- which(out$RMSE == min(out$RMSE))
   
   y.lim.1 <- min(out[,-c(1, 4, 5)])*0.95
   y.lim.2 <- 1.05*max(out[,-c(1, 4, 5)])
@@ -138,7 +138,7 @@ sspline.bias.var <- function(data){
     bias2 <- sum((data$Close-mean(ss$y))^2)/length(data$Time)
     var <- mean((ss$y-mean(ss$y))^2)#/length(data$Time)
     
-    mse.iter <- mse(data$Close, ss$y) # sum((ss$y-data$Close)^2)/length(data$Close)
+    mse.iter <- rmse(data$Close, ss$y) # sum((ss$y-data$Close)^2)/length(data$Close)
     
     p.mape <- abs((data$Close-ss$y)/data$Close)
     p.mape[is.na(p.mape)] <- 0 # predicted and actual are zero
@@ -156,9 +156,9 @@ sspline.bias.var <- function(data){
   }
   out <- cbind(lambda.i, bias.v, var.v, error.v, mape.v)
   out <- data.frame(out)
-  names(out) <- c("lambda", "Bias", "Variance", "MSE", "MAPE")
+  names(out) <- c("lambda", "Bias", "Variance", "RMSE", "MAPE")
   
-  best.values <- which(out$MSE == min(out$MSE))
+  best.values <- which(out$RMSE == min(out$RMSE))
   
   y.lim.1 <- min(out[,-c(1, 4, 5)])*0.95
   y.lim.2 <- 1.05*max(out[,-c(1, 4, 5)])
