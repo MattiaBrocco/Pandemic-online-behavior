@@ -26,7 +26,7 @@ source("complexitynonparam.R")
 AMZN_weekly <- read.timeseries.stocks("./data/AMZN_weekly.csv")
 NFLX_weekly <- read.timeseries.stocks("./data/NFLX_weekly.csv")
 ZOOM_weekly <- read.timeseries.stocks("./data/ZM_weekly.csv")
-ZOOM_weekly <- bakcast.ZOOM(ZOOM_weekly)
+ZOOM_weekly <- backcast.ZOOM(ZOOM_weekly)
 ```
 
 ## Loess

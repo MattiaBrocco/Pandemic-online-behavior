@@ -10,7 +10,7 @@ require(forecast)
 require(lubridate)
 
 #####0: Backcasting for ZOOM------
-bakcast.ZOOM <- function(data, data.ref = NFLX_weekly){
+backcast.ZOOM <- function(data, data.ref = NFLX_weekly){
   
   start.ts <- ts(data$Close, freq=52,
                  start = decimal_date(ymd("2019-04-15")))
@@ -131,3 +131,30 @@ gg.comparison2 <- function(){
                  start = decimal_date(as.Date("2017-12-04"))),
               main = "Close values"))
 }
+
+#####6: COVID-19 data-----
+read.covid.data <- function(path, get190 = FALSE){
+  data <- read.csv(path, sep=",")
+  # separator
+  if (dim(data)[2] == 1){
+    data <- read.csv(path, sep=";")}
+  else {data <- data}
+  
+  # date format
+  if (startsWith(as.character(as.Date(data$Date)[1][1]), "0")){
+    data$Date <- as.Date(data$Date, format = "%d/%m/%Y")
+  }
+  else {data$Date <- as.Date(data$Date)}
+  
+  # remove first and last observations
+  data <- slice(data, 2:(n() - 1))
+  
+  # AD-HOC SLICING FOR ZOOM
+  if (get190 == TRUE){
+    data <- data[data$Time >= "2019-04-15",]
+    data <- data[data$Time <= "2022-11-28",]
+  }
+  
+  return(data)
+}
+

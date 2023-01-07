@@ -18,7 +18,7 @@ source("complexitynonparam.R")
 AMZN_weekly <- read.timeseries.stocks("./data/AMZN_weekly.csv")
 NFLX_weekly <- read.timeseries.stocks("./data/NFLX_weekly.csv")
 ZOOM_weekly <- read.timeseries.stocks("./data/ZM_weekly.csv")
-ZOOM_weekly <- bakcast.ZOOM(ZOOM_weekly)
+ZOOM_weekly <- backcast.ZOOM(ZOOM_weekly)
 
 # Loess----
 loess.AMZN <- loess.bias.var(AMZN_weekly$Close)
@@ -94,7 +94,7 @@ best.h.ZOOM <- locreg.ZOOM$h.param[which(locreg.ZOOM$RMSE
 #   (beginning of maximum daily cases), there is another increase.
 
 #### Financial related events exhibited ----
-#The **fiscal year** of NFLX corresponds to the calendar year.
+#The **fiscal year** of AMZN corresponds to the calendar year.
 
 # - COVID is mentioned in the letter to shareholders immediately,
 #   from Q1 2020. Increase in subscription is explicitly
