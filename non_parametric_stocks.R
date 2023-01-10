@@ -213,22 +213,41 @@ lines(smooth.spline(ZOOM_weekly$Time, ZOOM_weekly$Close,
 
 # BEST MODELS ----
 #X11()
-plot(sm.regression(NFLX_weekly$Time, NFLX_weekly$Close, h = best.h.ZOOM,
-                   display = "none")$estimate,
-     type = "l", lwd = 2, ylim = c(0, 700), col = "#E50914", xaxt = "n",
-     ylab = "Adjusted Close Price", xlab = "")
-lines(sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = best.h.ZOOM,
-                    display = "none")$estimate,
-      type = "l", lwd = 2, col = "#FF9B00")
-lines(sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close, h = best.h.ZOOM,
-                    display = "none")$estimate,
-      type = "l", lwd = 2, col = "#2D8CFF")
-legend(0, 700, c("NFLX", "AMZN", "ZOOM"),
-       col = c("#E50914", "#FF9B00", "#2D8CFF"), lty = 1, lwd = 2)
-axis(1, at = seq(0, 50, length.out = 6),
-     labels = NFLX_weekly$Time[round(seq(1, 260, length.out = 6))])
+#plot(sm.regression(NFLX_weekly$Time, NFLX_weekly$Close, h = best.h.ZOOM,
+#                   display = "none")$estimate,
+#     type = "l", lwd = 2, ylim = c(0, 700), col = "#E50914", xaxt = "n",
+#     ylab = "Adjusted Close Price", xlab = "")
+#lines(sm.regression(AMZN_weekly$Time, AMZN_weekly$Close, h = best.h.ZOOM,
+#                    display = "none")$estimate,
+#      type = "l", lwd = 2, col = "#FF9B00")
+#lines(sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close, h = best.h.ZOOM,
+#                    display = "none")$estimate,
+#      type = "l", lwd = 2, col = "#2D8CFF")
+#legend(0, 700, c("NFLX", "AMZN", "ZOOM"),
+#       col = c("#E50914", "#FF9B00", "#2D8CFF"), lty = 1, lwd = 2)
+#axis(1, at = seq(0, 50, length.out = 6),
+#     labels = NFLX_weekly$Time[round(seq(1, 260, length.out = 6))])
 
 ### AMZN----
+#### visual comparison----
+plot(AMZN_weekly$Time, AMZN_weekly$Close,
+     xlab = "Time", main = "AMZN - Confronting Models",
+     ylab = "", lwd = 2, type = "l")
+
+lines(smooth.spline(AMZN_weekly$Time, AMZN_weekly$Close,
+                    lambda = best.lambda.AMZN),
+      col = "#FFD700", lwd = 2)
+sm.regression(AMZN_weekly$Time, AMZN_weekly$Close,
+              h = best.h.AMZN,
+              add = T, col = "#FFA500", lwd = 2)
+lines(AMZN_weekly$Time[j.AMZN],loess.AMZN.best$fitted[j.AMZN],
+      col = "#FF0000", lwd = 2)
+
+legend("topleft", legend=c("Smooth splines", "Local Regression",
+                            "LOESS"),
+       col=c("#FFA500", "#FFD700", "#FF0000"), lty=1, cex=0.55)
+
+####table----
 round(rbind(setNames(c(min(loess.AMZN$RMSE), min(locreg.AMZN$RMSE),
                        min(sspline.AMZN$RMSE)),
                      c("Loess", "Loc. Regr.", "Spline")),
@@ -240,6 +259,23 @@ best.h.AMZN
 
 
 ### NFLX----
+#### visual comparison----
+plot(NFLX_weekly$Time, NFLX_weekly$Close, type = "l",
+     xlab = "Time", ylab = "",lwd = 2,
+     main = "NFLX - Confronting Models")
+lines(smooth.spline(NFLX_weekly$Time, NFLX_weekly$Close,
+                    lambda = best.lambda.NFLX),
+      col = "#FFD700", lwd = 2)
+sm.regression(NFLX_weekly$Time, NFLX_weekly$Close,
+              h = best.h.AMZN,
+              add = T, col = "#FFA500", lwd = 2)
+lines(NFLX_weekly$Time[j.NFLX], loess.NFLX.best$fitted[j.NFLX],
+      col = "#FF0000", lwd = 2)
+legend("topleft",
+       legend=c("Smooth splines", "Local Regression", "LOESS"),
+       col=c("#FFA500", "#FFD700", "#FF0000"), lty=1, cex=0.55)
+
+####table----
 round(rbind(setNames(c(min(loess.NFLX$RMSE), min(locreg.NFLX$RMSE),
                        min(sspline.NFLX$RMSE)),
                      c("Loess", "Loc. Regr.", "Spline")),
@@ -250,6 +286,23 @@ best.h.NFLX
 # best model for NFLX: local regression, with h = 10
 
 ### ZOOM----
+#### visual comparison----
+plot(ZOOM_weekly$Time, ZOOM_weekly$Close, type = "l",
+     xlab = "Time", ylab = "",lwd = 2,
+     main = "ZM - Confronting Models")
+lines(smooth.spline(ZOOM_weekly$Time, ZOOM_weekly$Close,
+                    lambda = best.lambda.NFLX),
+      col = "#FFD700", lwd = 2)
+sm.regression(ZOOM_weekly$Time, ZOOM_weekly$Close,
+              h = best.h.AMZN,
+              add = T, col = "#FFA500", lwd = 2)
+lines(ZOOM_weekly$Time[j.NFLX], loess.ZOOM.best$fitted[j.NFLX],
+      col = "#FF0000", lwd = 2)
+legend("topleft",
+       legend=c("Smooth splines", "Local Regression", "LOESS"),
+       col=c("#FFA500", "#FFD700", "#FF0000"), lty=1, cex=0.55)
+
+####table----
 round(rbind(setNames(c(min(loess.ZOOM$RMSE), min(locreg.ZOOM$RMSE),
                        min(sspline.ZOOM$RMSE)),
                      c("Loess", "Loc. Regr.", "Spline")),
